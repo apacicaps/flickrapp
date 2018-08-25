@@ -4,12 +4,12 @@ import { createStackNavigator } from 'react-navigation';
 import { Nav } from './sharedstyles';
 import { LogoTitle } from './logo';
 
-class GlobalFeed extends React.Component {
+class FavoritesFeed extends React.Component {
 
   render() {
     return (
       <View style={{ flex: 1 }}>
-        <Text>Global feed</Text>
+        <Text>Profile</Text>
       </View>
     );
   }
@@ -19,7 +19,7 @@ class GlobalFeed extends React.Component {
 const Routes = createStackNavigator(
   {
     Main: {
-      screen: GlobalFeed,
+      screen: FavoritesFeed,
       navigationOptions: ({ navigation, screenProps }) => ({
         headerTitle: <LogoTitle />,
       }),
