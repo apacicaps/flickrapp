@@ -70,7 +70,7 @@ class RecentFeed extends React.Component {
     return (
       this.state.isConnected ?
         this.state.loading ?
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={container}>
             <ActivityIndicator size="large" color="#0063DC" />
           </View>
           :

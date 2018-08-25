@@ -21,8 +21,9 @@
   "dependencies": {
     "expo": "^28.0.0",
     "react": "16.3.1",
-    "react-native": "https://github.com/expo/react-native/archive/sdk-28.0.0.tar.gz",
+    "react-native": "^0.55",
     "react-native-image-zoom-viewer": "^2.2.15",
-    "react-navigation": "^2.12.0"
+    "react-native-maps": "^0.21.0",
+    "react-navigation": "^2.12.1"
   }
 }

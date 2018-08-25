@@ -1,8 +1,7 @@
 import React from 'react';
-import { Text, View, StyleSheet, } from 'react-native';
+import { Text, View, StyleSheet, ActivityIndicator } from 'react-native';
 import { container, } from '../sharedstyles';
 import ImageViewer from 'react-native-image-zoom-viewer';
-
 
 export class ImageDetails extends React.Component {
     constructor(props) {
@@ -25,6 +24,7 @@ export class ImageDetails extends React.Component {
                     <ImageViewer imageUrls={images}
                         backgroundColor={'white'}
                         saveToLocalByLongPress={false}
+                        loadingRender={() => <ActivityIndicator size="large" color="#0063DC" />}
                         renderIndicator={() => null} />
                     <Text style={styles.zoomtext}>Pinch to zoom</Text>
                 </View >

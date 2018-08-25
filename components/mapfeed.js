@@ -1,7 +1,7 @@
 import React from 'react';
 import { NetInfo, Text, View, Image, StyleSheet, TouchableOpacity, FlatList, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { createStackNavigator } from 'react-navigation';
-import { MapView } from 'expo';
+import MapView, { Marker, Callout } from 'react-native-maps';
 import { fetchFromPublicApi, apikey } from 'testapp/utils/request';
 import { Nav, container, imagewrap, imageitem } from './sharedstyles';
 import { ImageDetails } from './image/imagedetails';
@@ -14,15 +14,15 @@ class MapFeed extends React.Component {
     this.state = {
       isConnected: null,
       images: [],
+      markers: [],
       loading: true,
       latitude: 55.405691,
       longitude: 10.3860423,
     };
 
     this._fetchImages = this._fetchImages.bind(this);
-    this.fetchimginfo = this.fetchimginfo.bind(this);
+    this._fetchInfoForImg = this._fetchInfoForImg.bind(this);
 
-    this.mapImagesForMarkers = this.mapImagesForMarkers.bind(this);
   }
 
   componentDidMount() {
@@ -36,6 +36,7 @@ class MapFeed extends React.Component {
     );
 
     this._fetchImages();
+
   }
 
   componentWillUnmount() {
@@ -57,40 +58,39 @@ class MapFeed extends React.Component {
     fetchFromPublicApi(url).then(
       response => response.json())
       .then(result => {
+
+        for (var i = 0; i < result.photos.photo.length; i++) {
+          this._fetchInfoForImg(result.photos.photo[i].id);
+        };
         this.setState({
-          images: this.mapImagesForMarkers(result.photos.photo),
+          loading: false,
         });
       });
   }
 
-  async mapImagesForMarkers(images) {
-    let mappedImages = [];
-    for (var i = 0; i < images.length; i++) {
-      var t = await this.fetchimginfo(images[i].id);
-      mappedImages.push(t)
-    };
-    console.log(mappedImages)
-    this.setState({loading: false});
-    return mappedImages;
-  }
+  _fetchInfoForImg(id) {
+    this.setState({ loading: true, });
 
-  async fetchimginfo(imgid) {
-    let url = `/rest/?method=flickr.photos.getInfo&api_key=${apikey}&photo_id=${imgid}&`;
-    let tmp = fetchFromPublicApi(url).then(
+    let url = `/rest/?method=flickr.photos.getInfo&api_key=${apikey}&photo_id=${id}&`;
+
+    fetchFromPublicApi(url).then(
       response => response.json())
       .then(result => {
         let photo = result.photo;
-        var tmpimg = {
-          id: photo.id,
-          lat: photo.location.latitude,
-          lng: photo.location.longitude,
-          smalluri: `https://farm${photo.farm}.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_m.jpg`,
-          biguri: `https://farm${photo.farm}.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_h.jpg`
-        };
-        return tmpimg;
-      });
+        this.setState({
+          markers: [...this.state.markers, {
+            id: photo.id,
+            title: photo.title,
+            latlng: {
+              latitude: Number(photo.location.latitude),
+              longitude: Number(photo.location.longitude),
+            },
+            smalluri: `https://farm${photo.farm}.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_m.jpg`,
+            biguri: `https://farm${photo.farm}.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_h.jpg`
+          }],
+        });
 
-    return tmp;
+      });
   }
 
 
@@ -99,26 +99,44 @@ class MapFeed extends React.Component {
     return (
       this.state.isConnected ?
         this.state.loading ?
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={container}>
             <ActivityIndicator size="large" color="#0063DC" />
           </View>
           :
-          <View style={{ flex: 1 }}>
-            <MapView
-              style={{ flex: 1 }}
-              initialRegion={{
-                latitude: this.state.latitude,
-                longitude: this.state.longitude,
-                latitudeDelta: 0.0922,
-                longitudeDelta: 0.0421,
-              }}
-            />
+          <View style={container}>
+            {this.state.markers.length > 0 &&
+              <MapView
+                style={styles.map}
+                initialRegion={{
+                  latitude: this.state.latitude,
+                  longitude: this.state.longitude,
+                  latitudeDelta: 0.0922,
+                  longitudeDelta: 0.0421,
+                }}
+              >
+
+                {this.state.markers.map(marker => (
+                  <Marker key={marker.id}
+                    coordinate={marker.latlng}
+                    onPress={() => this.props.navigation.navigate('Image', { imgurl: marker.biguri })}
+                  >
+                    
+                  </Marker>
+                ))}
+
+              </MapView>
+            }
           </View>
         : <Text>No internet connection</Text>
     );
   }
 }
 
+const styles = StyleSheet.create({
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
+});
 
 const Routes = createStackNavigator(
   {
@@ -131,7 +149,6 @@ const Routes = createStackNavigator(
     Image: {
       screen: ImageDetails,
       navigationOptions: ({ navigation, screenProps, props }) => ({
-        title: ' ',
         headerRight: (
           <LogoTitle placement='right' />
         ),
