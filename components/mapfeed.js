@@ -1,9 +1,9 @@
 import React from 'react';
-import { NetInfo, Text, View, Image, StyleSheet, TouchableOpacity, FlatList, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { NetInfo, Text, View, StyleSheet, ActivityIndicator } from 'react-native';
 import { createStackNavigator } from 'react-navigation';
-import MapView, { Marker, Callout } from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
 import { fetchFromPublicApi, apikey } from 'testapp/utils/request';
-import { Nav, container, imagewrap, imageitem } from './sharedstyles';
+import { Nav, container, } from './sharedstyles';
 import { ImageDetails } from './image/imagedetails';
 import { LogoTitle } from './logo';
 
@@ -13,11 +13,14 @@ class MapFeed extends React.Component {
 
     this.state = {
       isConnected: null,
-      images: [],
       markers: [],
       loading: true,
-      latitude: 55.405691,
-      longitude: 10.3860423,
+      region: {
+        latitude: 55.405691,
+        longitude: 10.3860423,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      },
     };
 
     this._fetchImages = this._fetchImages.bind(this);
@@ -54,11 +57,10 @@ class MapFeed extends React.Component {
 
   _fetchImages() {
     this.setState({ loading: true, });
-    let url = `/rest/?method=flickr.photos.search&api_key=${apikey}&accuracy=11&lat=${this.state.latitude}&lon=${this.state.longitude}&per_page=20&`;
+    let url = `/rest/?method=flickr.photos.search&api_key=${apikey}&accuracy=11&lat=${this.state.region.latitude}&lon=${this.state.region.longitude}&per_page=40&`;
     fetchFromPublicApi(url).then(
       response => response.json())
       .then(result => {
-
         for (var i = 0; i < result.photos.photo.length; i++) {
           this._fetchInfoForImg(result.photos.photo[i].id);
         };
@@ -80,7 +82,7 @@ class MapFeed extends React.Component {
         this.setState({
           markers: [...this.state.markers, {
             id: photo.id,
-            title: photo.title,
+            title: photo.title._content,
             latlng: {
               latitude: Number(photo.location.latitude),
               longitude: Number(photo.location.longitude),
@@ -93,9 +95,7 @@ class MapFeed extends React.Component {
       });
   }
 
-
   render() {
-
     return (
       this.state.isConnected ?
         this.state.loading ?
@@ -107,27 +107,22 @@ class MapFeed extends React.Component {
             {this.state.markers.length > 0 &&
               <MapView
                 style={styles.map}
-                initialRegion={{
-                  latitude: this.state.latitude,
-                  longitude: this.state.longitude,
-                  latitudeDelta: 0.0922,
-                  longitudeDelta: 0.0421,
-                }}
-              >
-
+                initialRegion={this.state.region}>
                 {this.state.markers.map(marker => (
                   <Marker key={marker.id}
                     coordinate={marker.latlng}
-                    onPress={() => this.props.navigation.navigate('Image', { imgurl: marker.biguri })}
-                  >
-                    
-                  </Marker>
+                    title={marker.title.toString()}
+                    description={'Press to view details'}
+                    onCalloutPress={() => this.props.navigation.navigate('Image', { imgurl: marker.biguri, imgid: marker.id, showfavbtn: true })}
+                  />
                 ))}
-
               </MapView>
             }
           </View>
-        : <Text>No internet connection</Text>
+        :
+        <View style={container}>
+          <Text>No internet connection</Text>
+        </View>
     );
   }
 }
@@ -142,13 +137,13 @@ const Routes = createStackNavigator(
   {
     Main: {
       screen: MapFeed,
-      navigationOptions: ({ navigation, screenProps }) => ({
+      navigationOptions: () => ({
         headerTitle: <LogoTitle />,
       }),
     },
     Image: {
       screen: ImageDetails,
-      navigationOptions: ({ navigation, screenProps, props }) => ({
+      navigationOptions: () => ({
         headerRight: (
           <LogoTitle placement='right' />
         ),

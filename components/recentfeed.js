@@ -1,8 +1,8 @@
 import React from 'react';
-import { NetInfo, Text, View, Image, StyleSheet, TouchableOpacity, FlatList, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { NetInfo, Text, View, Image, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { createStackNavigator } from 'react-navigation';
-import { fetchFromPublicApi } from 'testapp/utils/request';
-import { Nav, container, imagewrap, imageitem } from './sharedstyles';
+import { fetchFromPublicApi, apikey } from 'testapp/utils/request';
+import { Nav, container, imagewrap, imageitem, headline } from './sharedstyles';
 import { ImageDetails } from './image/imagedetails';
 import { LogoTitle } from './logo';
 
@@ -23,7 +23,7 @@ class RecentFeed extends React.Component {
   }
 
   componentDidMount() {
-    //check for internet connection
+    // check for internet connection
     NetInfo.isConnected.addEventListener(
       'connectionChange',
       this._handleConnectivityChange
@@ -49,12 +49,29 @@ class RecentFeed extends React.Component {
   }
 
   _fetchImages() {
-    let url = '/feeds/photos_public.gne?';
+    // get 18 recent public flickr images
+    let url = `/rest/?method=flickr.photos.getRecent&api_key=${apikey}&per_page=18&`;
     fetchFromPublicApi(url).then(
       response => response.json())
       .then(result => {
+        // map response result to image array in state
+        for (var i = 0; i < result.photos.photo.length; i++) {
+          let photo = result.photos.photo[i];
+          // only add image if it is not already in images array
+          let index = this.state.images.findIndex(el => el.id == photo.id);
+          if (index == -1) {
+            // add img to start of image array to "push" older image down in view
+            this.setState({
+              images: [{
+                id: photo.id,
+                smalluri: `https://farm${photo.farm}.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_m.jpg`,
+                biguri: `https://farm${photo.farm}.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_h.jpg`
+              }, ...this.state.images],
+            });
+          }
+        }
+        // stop loading and/or refreshing spinner
         this.setState({
-          images: result.items,
           loading: false,
           refreshing: false,
         });
@@ -62,7 +79,7 @@ class RecentFeed extends React.Component {
   }
 
   _onRefresh = () => {
-    this.setState({ refreshing: true, });
+    this.setState({ refreshing: true, }); // start refreshing spinner
     this._fetchImages();
   }
 
@@ -70,11 +87,13 @@ class RecentFeed extends React.Component {
     return (
       this.state.isConnected ?
         this.state.loading ?
+          // loading spinner
           <View style={container}>
             <ActivityIndicator size="large" color="#0063DC" />
           </View>
           :
           <View style={container}>
+            <Text style={headline}>RECENT PUBLIC PHOTOS</Text>
             <FlatList
               refreshControl={
                 <RefreshControl
@@ -84,19 +103,22 @@ class RecentFeed extends React.Component {
                   progressBackgroundColor={'#FF0084'} />}
               numColumns={3}
               data={this.state.images}
-              keyExtractor={(item) => '' + item.date_taken}
+              keyExtractor={(item) => '' + item.id}
               renderItem={({ item }) => (
-                <TouchableOpacity key={'imgwrap_' + item.date_taken}
+                // go to image detail view when image is pressed
+                <TouchableOpacity key={'imgwrap_' + item.id}
                   style={imagewrap}
-                  onPress={() => this.props.navigation.navigate('Image', { imgurl: item.media.m })}>
-                  <Image key={'img_' + item.date_taken} style={imageitem} source={{ uri: item.media.m }} />
-
+                  onPress={() => this.props.navigation.navigate('Image', { imgurl: item.biguri, imgid: item.id, showfavbtn: true })}>
+                  <Image key={'img_' + item.id} style={imageitem} source={{ uri: item.smalluri }} />
                 </TouchableOpacity>
               )}
             />
           </View>
-
-        : <Text>No internet connection</Text>
+        :
+        // show msg if no internet connection
+        <View style={container}>
+          <Text style={headline}>No internet connection</Text>
+        </View>
     );
   }
 }
@@ -106,13 +128,13 @@ const Routes = createStackNavigator(
   {
     Main: {
       screen: RecentFeed,
-      navigationOptions: ({ navigation, screenProps }) => ({
+      navigationOptions: () => ({
         headerTitle: <LogoTitle />,
       }),
     },
     Image: {
       screen: ImageDetails,
-      navigationOptions: ({ navigation, screenProps, props }) => ({
+      navigationOptions: () => ({
         title: ' ',
         headerRight: (
           <LogoTitle placement='right' />
