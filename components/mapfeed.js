@@ -7,6 +7,11 @@ import { Nav, container, } from './sharedstyles';
 import { ImageDetails } from './image/imagedetails';
 import { LogoTitle } from './logo';
 
+/* TO DO:
+  - Update images when user changes region/location
+  - Show thumbnail image in callout/info window on marker
+*/
+
 class MapFeed extends React.Component {
   constructor(props) {
     super(props);
@@ -56,6 +61,7 @@ class MapFeed extends React.Component {
   }
 
   _fetchImages() {
+    // get images based on location - default is House of Code in Odense
     this.setState({ loading: true, });
     let url = `/rest/?method=flickr.photos.search&api_key=${apikey}&accuracy=11&lat=${this.state.region.latitude}&lon=${this.state.region.longitude}&per_page=40&`;
     fetchFromPublicApi(url).then(
@@ -72,9 +78,8 @@ class MapFeed extends React.Component {
 
   _fetchInfoForImg(id) {
     this.setState({ loading: true, });
-
     let url = `/rest/?method=flickr.photos.getInfo&api_key=${apikey}&photo_id=${id}&`;
-
+    // get img info from api
     fetchFromPublicApi(url).then(
       response => response.json())
       .then(result => {
@@ -91,7 +96,6 @@ class MapFeed extends React.Component {
             biguri: `https://farm${photo.farm}.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_h.jpg`
           }],
         });
-
       });
   }
 
@@ -129,10 +133,11 @@ class MapFeed extends React.Component {
 
 const styles = StyleSheet.create({
   map: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFillObject, // style to make map fill screen
   },
 });
 
+// stacknavigator for map screen
 const Routes = createStackNavigator(
   {
     Main: {

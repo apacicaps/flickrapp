@@ -1,5 +1,8 @@
 {
   "expoServerPort": null,
   "packagerPort": null,
-  "packagerPid": null
+  "packagerPid": null,
+  "expoServerNgrokUrl": "https://a4-vy8.saraegtved.testapp.exp.direct",
+  "packagerNgrokUrl": "https://packager.a4-vy8.saraegtved.testapp.exp.direct",
+  "ngrokPid": 7633
 }

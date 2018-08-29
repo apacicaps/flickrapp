@@ -123,7 +123,7 @@ class RecentFeed extends React.Component {
   }
 }
 
-
+// stack navigation for Recent feed
 const Routes = createStackNavigator(
   {
     Main: {

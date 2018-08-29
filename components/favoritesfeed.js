@@ -14,7 +14,6 @@ class FavoritesFeed extends React.Component {
     this.state = {
       isConnected: null,
       images: [],
-      keys: [],
       loading: true,
       refreshing: false,
     };
@@ -41,6 +40,7 @@ class FavoritesFeed extends React.Component {
   }
 
   async _getKeys() {
+    // get key value pairs saved to storage on device, value = img id
     try {
       AsyncStorage.getAllKeys((err, keys) => {
         AsyncStorage.multiGet(keys, (err, stores) => {
@@ -65,12 +65,11 @@ class FavoritesFeed extends React.Component {
   }
 
   _fetchInfoForImg(id) {
-    // only add image if it is not already in images array
     let index = this.state.images.findIndex(el => el.id == id);
-
+    // only add image if it is not already in images array
     if (index == -1) {
       let url = `/rest/?method=flickr.photos.getInfo&api_key=${apikey}&photo_id=${id}&`;
-
+      // get img info from apiz
       fetchFromPublicApi(url).then(
         response => response.json())
         .then(result => {
@@ -96,6 +95,7 @@ class FavoritesFeed extends React.Component {
     return (
       this.state.isConnected ?
         this.state.loading ?
+          // loading spinner
           <View style={container}>
             <ActivityIndicator size="large" color="#0063DC" />
           </View>
@@ -114,6 +114,7 @@ class FavoritesFeed extends React.Component {
                 data={this.state.images}
                 keyExtractor={(item) => '' + item.id}
                 renderItem={({ item }) => (
+                  // go to image detail view when image is pressed
                   <TouchableOpacity key={'imgwrap_' + item.id}
                     style={imagewrap}
                     onPress={() => this.props.navigation.navigate('Image', { imgurl: item.biguri, imgid: item.id, showfavbtn: false })}>
@@ -129,6 +130,7 @@ class FavoritesFeed extends React.Component {
             }
           </View>
         :
+        // show msg if no internet connection
         <View style={container}>
           <Text style={headline}>No internet connection</Text>
         </View>
@@ -136,7 +138,7 @@ class FavoritesFeed extends React.Component {
   }
 }
 
-
+// stack navigation for favorites feed
 const Routes = createStackNavigator(
   {
     Main: {

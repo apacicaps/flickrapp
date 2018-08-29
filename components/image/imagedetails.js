@@ -17,6 +17,7 @@ export class ImageDetails extends React.Component {
     }
 
     async _saveFav(imgid) {
+        // save id of img to device storage with key value pair
         try {
             await AsyncStorage.setItem('@TestAppFav:' + imgid, imgid).then(() => {
                 this._toggleModal(true);
@@ -38,6 +39,7 @@ export class ImageDetails extends React.Component {
                 url: this.props.navigation.state.params.imgurl,
             },
         ];
+        // only show add to favorites btn if imagedetails is shown from map screen or recent feed
         const showAddToFavBtn = this.props.navigation.state.params.showfavbtn;
 
         return (
@@ -55,6 +57,7 @@ export class ImageDetails extends React.Component {
                     </View>
                 </Modal>
                 <View style={{ width: Dimensions.get('screen').width - 30, height: Dimensions.get('screen').height - 250, marginTop: 15 }}>
+                    {/* ImageViewer is a plugin that enables zoom and pinch for images */}
                     <ImageViewer imageUrls={images}
                         backgroundColor={'transparent'}
                         saveToLocalByLongPress={false}
